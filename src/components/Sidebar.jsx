@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard, Users, ShieldCheck,
-    Package, Calendar, LogOut, X, Menu
+    Package, Calendar, LogOut, X, Menu, FileText
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -9,6 +9,7 @@ const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/rentals', icon: Calendar, label: 'Rentals' },
     { to: '/verifications', icon: ShieldCheck, label: 'Verifications' },
+       { to: '/listing-requests', icon: FileText, label: 'Listing Requests' },
     { to: '/users', icon: Users, label: 'Users' },
     { to: '/listings', icon: Package, label: 'Listings' },
 ];

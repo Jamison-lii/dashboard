@@ -1,10 +1,67 @@
 import { useEffect, useState } from 'react';
-import { Search, Users as UsersIcon, ShieldCheck, ShieldOff, Mail, Phone, MapPin, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Users as UsersIcon, ShieldCheck, ShieldOff, Mail, Phone, MapPin, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Crown } from 'lucide-react';
 import api from '../api/axios';
 
 const statusColors = {
     ACTIVE: 'bg-green-100 text-green-700',
     SUSPENDED: 'bg-red-100 text-red-700',
+};
+
+const SubscriptionModal = ({ userId, onClose, onActivated }) => {
+    const [txRef, setTxRef] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleActivate = async () => {
+        if (!txRef.trim()) {
+            setError('Please enter a transaction reference.');
+            return;
+        }
+        setLoading(true);
+        try {
+            const res = await api.post(`/admin/subscriptions/${userId}`, {
+                transaction_reference: txRef
+            });
+            onActivated(userId, res.data.data.subscription_expires_at);
+            onClose();
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to activate subscription.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl w-full max-w-sm p-6">
+                <h3 className="font-bold text-slate-900 mb-1">Activate Subscription</h3>
+                <p className="text-sm text-slate-500 mb-4">
+                    Record a 500 CFA monthly subscription payment for this owner.
+                </p>
+                <input
+                    type="text"
+                    value={txRef}
+                    onChange={(e) => setTxRef(e.target.value)}
+                    placeholder="Transaction reference (e.g. MoMo TxID)"
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-slate-900 text-sm mb-3"
+                />
+                {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
+                <div className="flex gap-3">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-slate-600 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleActivate}
+                        disabled={loading}
+                        className="flex-1 py-2.5 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 disabled:opacity-50">
+                        {loading ? 'Activating...' : 'Activate'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 };
 
 export default function Users() {
@@ -17,6 +74,7 @@ export default function Users() {
     const [total, setTotal] = useState(0);
     const [expandedId, setExpandedId] = useState(null);
     const [actionLoading, setActionLoading] = useState(null);
+    const [subModal, setSubModal] = useState(null);
     const limit = 15;
 
     useEffect(() => {
@@ -65,6 +123,11 @@ export default function Users() {
         month: 'short', day: 'numeric', year: 'numeric'
     });
 
+    const isSubscriptionActive = (expiresAt) => {
+        if (!expiresAt) return false;
+        return new Date(expiresAt) > new Date();
+    };
+
     const totalPages = Math.ceil(total / limit);
 
     return (
@@ -102,6 +165,8 @@ export default function Users() {
                     <div className="space-y-3">
                         {users.map((u) => {
                             const isExpanded = expandedId === u.id;
+                            const subActive = isSubscriptionActive(u.subscription_expires_at);
+
                             return (
                                 <div key={u.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                                     {/* Header */}
@@ -129,16 +194,25 @@ export default function Users() {
                                                             <ShieldCheck size={12} /> Verified
                                                         </span>
                                                     )}
+                                                    {subActive && (
+                                                        <span className="text-xs font-medium px-2 py-1 rounded-full bg-pink-100 text-pink-700 flex items-center gap-1">
+                                                            <Crown size={12} /> Owner
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <p className="text-sm text-slate-500 truncate">{u.email}</p>
                                             </div>
                                         </div>
-                                        {isExpanded ? <ChevronUp size={18} className="text-gray-400 flex-shrink-0 ml-2" /> : <ChevronDown size={18} className="text-gray-400 flex-shrink-0 ml-2" />}
+                                        {isExpanded
+                                            ? <ChevronUp size={18} className="text-gray-400 flex-shrink-0 ml-2" />
+                                            : <ChevronDown size={18} className="text-gray-400 flex-shrink-0 ml-2" />
+                                        }
                                     </button>
 
                                     {/* Expanded */}
                                     {isExpanded && (
                                         <div className="px-4 pb-4 border-t border-gray-100 pt-4">
+                                            {/* User details */}
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 text-sm">
                                                 <p className="flex items-center gap-2 text-slate-600">
                                                     <Mail size={14} className="text-gray-400" /> {u.email}
@@ -156,15 +230,34 @@ export default function Users() {
                                                 <p className="text-slate-600">
                                                     Joined {formatDate(u.created_at)}
                                                 </p>
-                                                <p className="text-slate-600">
-                                                    Deposit: {u.deposit_paid ? 'Paid ✅' : 'Not Paid ❌'}
-                                                </p>
                                             </div>
 
+                                            {/* Subscription card */}
+                                            <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-gray-400 uppercase mb-0.5">Subscription</p>
+                                                        <p className={`text-sm font-semibold ${subActive ? 'text-green-600' : 'text-red-500'}`}>
+                                                            {subActive
+                                                                ? `Active until ${formatDate(u.subscription_expires_at)}`
+                                                                : 'Expired / Not subscribed'
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setSubModal(u.id)}
+                                                        className="flex items-center gap-1 bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-800 transition-colors">
+                                                        <Crown size={12} />
+                                                        {subActive ? 'Renew' : 'Activate'}
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Suspend / Reactivate */}
                                             <button
                                                 onClick={() => handleToggleStatus(u.id, u.account_status)}
                                                 disabled={actionLoading === u.id}
-                                                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 ${
+                                                className={`flex items-center justify-center gap-2 px-4 py-2 w-full rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 ${
                                                     u.account_status === 'ACTIVE'
                                                         ? 'bg-red-50 text-red-600 hover:bg-red-100'
                                                         : 'bg-green-50 text-green-600 hover:bg-green-100'
@@ -198,6 +291,23 @@ export default function Users() {
                         </div>
                     )}
                 </>
+            )}
+
+            {/* Subscription Modal */}
+            {subModal && (
+                <SubscriptionModal
+                    userId={subModal}
+                    onClose={() => setSubModal(null)}
+                    onActivated={(userId, newExpiry) => {
+                        setUsers((prev) =>
+                            prev.map((u) =>
+                                u.id === userId
+                                    ? { ...u, subscription_expires_at: newExpiry }
+                                    : u
+                            )
+                        );
+                    }}
+                />
             )}
         </div>
     );

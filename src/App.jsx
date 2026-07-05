@@ -10,6 +10,7 @@ import Verifications from './pages/Verifications';
 import Users from './pages/Users';
 import Listings from './pages/Listings';
 import Sidebar from './components/Sidebar';
+import ListingRequests from './pages/ListingRequests';
 
 const ProtectedRoute = ({ children }) => {
     const { user, loading } = useAuth();
@@ -59,6 +60,7 @@ export default function App() {
                     <Route path="/verifications" element={<ProtectedRoute><Verifications /></ProtectedRoute>} />
                     <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
                     <Route path="/listings" element={<ProtectedRoute><Listings /></ProtectedRoute>} />
+                    <Route path="/listing-requests" element={<ProtectedRoute><ListingRequests /></ProtectedRoute>} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </BrowserRouter>

@@ -12,6 +12,8 @@ export default function ListingItemFormModal({ item, listingId, onClose, onSaved
         minimum_rental_duration: item?.minimum_rental_duration ?? '',
         maximum_rental_duration: item?.maximum_rental_duration ?? '',
         requires_verification: item?.requires_verification ?? false,
+        requires_deposit: item?.requires_deposit ?? false,
+        deposit_amount: item?.deposit_amount ?? '',
     });
     const [imageFile, setImageFile] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -31,24 +33,35 @@ export default function ListingItemFormModal({ item, listingId, onClose, onSaved
             return;
         }
 
+        if (formData.requires_deposit && !formData.deposit_amount) {
+            setError('Please provide a deposit amount.');
+            return;
+        }
+
         setLoading(true);
 
         try {
             const data = new FormData();
             Object.entries(formData).forEach(([key, value]) => {
-                if (value !== '' && value !== null) data.append(key, value);
+                if (value !== '' && value !== null && value !== undefined) {
+                    data.append(key, value);
+                }
             });
             if (imageFile) data.append('image', imageFile);
 
             if (item) {
-                const res = await api.put(`/admin/listings/${listingId}/items/${item.id}`, data, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                const res = await api.put(
+                    `/admin/listings/${listingId}/items/${item.id}`,
+                    data,
+                    { headers: { 'Content-Type': 'multipart/form-data' } }
+                );
                 onSaved(res.data.data.listingItem);
             } else {
-                const res = await api.post(`/admin/listings/${listingId}/items`, data, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                const res = await api.post(
+                    `/admin/listings/${listingId}/items`,
+                    data,
+                    { headers: { 'Content-Type': 'multipart/form-data' } }
+                );
                 onSaved(res.data.data.listingItem);
             }
         } catch (err) {
@@ -69,6 +82,7 @@ export default function ListingItemFormModal({ item, listingId, onClose, onSaved
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-5 space-y-4">
+                    {/* Name */}
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
                         <input
@@ -80,6 +94,7 @@ export default function ListingItemFormModal({ item, listingId, onClose, onSaved
                         />
                     </div>
 
+                    {/* Description */}
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
                         <textarea
@@ -91,6 +106,7 @@ export default function ListingItemFormModal({ item, listingId, onClose, onSaved
                         />
                     </div>
 
+                    {/* Image */}
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Image</label>
                         <input
@@ -100,39 +116,55 @@ export default function ListingItemFormModal({ item, listingId, onClose, onSaved
                             className="w-full text-sm"
                         />
                         {item?.image && !imageFile && (
-                            <img src={item.image} alt="" className="w-20 h-20 rounded-lg object-cover mt-2" />
+                            <img
+                                src={item.image}
+                                alt="Current"
+                                className="w-20 h-20 rounded-lg object-cover mt-2 border border-gray-200"
+                            />
                         )}
                     </div>
 
+                    {/* Prices */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Price / Day</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">
+                                Price / Day (CFA)
+                            </label>
                             <input
                                 name="price_per_day"
                                 type="number"
+                                min="0"
                                 value={formData.price_per_day}
                                 onChange={handleChange}
+                                placeholder="e.g. 5000"
                                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-slate-900 text-sm"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Price / Hour</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">
+                                Price / Hour (CFA)
+                            </label>
                             <input
                                 name="price_per_hour"
                                 type="number"
+                                min="0"
                                 value={formData.price_per_hour}
                                 onChange={handleChange}
+                                placeholder="e.g. 500"
                                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-slate-900 text-sm"
                             />
                         </div>
                     </div>
+                    <p className="text-xs text-slate-400 -mt-2">At least one price is required.</p>
 
+                    {/* Quantity + Duration */}
                     <div className="grid grid-cols-3 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Quantity</label>
                             <input
                                 name="quantity_available"
                                 type="number"
+                                min="1"
                                 value={formData.quantity_available}
                                 onChange={handleChange}
                                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-slate-900 text-sm"
@@ -144,6 +176,7 @@ export default function ListingItemFormModal({ item, listingId, onClose, onSaved
                             <input
                                 name="minimum_rental_duration"
                                 type="number"
+                                min="1"
                                 value={formData.minimum_rental_duration}
                                 onChange={handleChange}
                                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-slate-900 text-sm"
@@ -155,6 +188,7 @@ export default function ListingItemFormModal({ item, listingId, onClose, onSaved
                             <input
                                 name="maximum_rental_duration"
                                 type="number"
+                                min="1"
                                 value={formData.maximum_rental_duration}
                                 onChange={handleChange}
                                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-slate-900 text-sm"
@@ -163,16 +197,55 @@ export default function ListingItemFormModal({ item, listingId, onClose, onSaved
                         </div>
                     </div>
 
-                    <label className="flex items-center gap-2 text-sm text-slate-700">
-                        <input
-                            type="checkbox"
-                            name="requires_verification"
-                            checked={formData.requires_verification}
-                            onChange={handleChange}
-                            className="rounded"
-                        />
-                        Requires identity verification to rent
-                    </label>
+                    {/* Divider */}
+                    <div className="border-t border-gray-100 pt-2">
+                        <p className="text-xs font-semibold text-gray-400 uppercase mb-3">Requirements</p>
+
+                        {/* Requires verification */}
+                        <label className="flex items-center gap-3 text-sm text-slate-700 mb-3 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                name="requires_verification"
+                                checked={formData.requires_verification}
+                                onChange={handleChange}
+                                className="w-4 h-4 rounded accent-slate-900"
+                            />
+                            <span>Requires identity verification to rent</span>
+                        </label>
+
+                        {/* Requires deposit */}
+                        <label className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                name="requires_deposit"
+                                checked={formData.requires_deposit}
+                                onChange={handleChange}
+                                className="w-4 h-4 rounded accent-slate-900"
+                            />
+                            <span>Requires a security deposit</span>
+                        </label>
+
+                        {/* Deposit amount — only shown when requires_deposit is checked */}
+                        {formData.requires_deposit && (
+                            <div className="mt-3">
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    Deposit Amount (CFA) <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    name="deposit_amount"
+                                    type="number"
+                                    min="0"
+                                    value={formData.deposit_amount}
+                                    onChange={handleChange}
+                                    placeholder="e.g. 10000"
+                                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-slate-900 text-sm"
+                                />
+                                <p className="text-xs text-slate-400 mt-1">
+                                    This deposit is refundable after the rental period ends.
+                                </p>
+                            </div>
+                        )}
+                    </div>
 
                     {error && (
                         <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg">{error}</div>
