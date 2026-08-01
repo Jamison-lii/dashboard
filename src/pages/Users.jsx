@@ -35,8 +35,11 @@ const SubscriptionModal = ({ userId, onClose, onActivated }) => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-xl w-full max-w-sm p-6">
                 <h3 className="font-bold text-slate-900 mb-1">Activate Subscription</h3>
-                <p className="text-sm text-slate-500 mb-4">
-                    Record a 500 CFA monthly subscription payment for this owner.
+                <p className="text-sm text-slate-500 mb-1">
+                    Record a <span className="font-semibold text-slate-700">5,000 CFA yearly</span> subscription payment for this owner.
+                </p>
+                <p className="text-xs text-slate-400 mb-4">
+                    Subscription will be active for 12 months from today.
                 </p>
                 <input
                     type="text"
@@ -56,14 +59,13 @@ const SubscriptionModal = ({ userId, onClose, onActivated }) => {
                         onClick={handleActivate}
                         disabled={loading}
                         className="flex-1 py-2.5 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 disabled:opacity-50">
-                        {loading ? 'Activating...' : 'Activate'}
+                        {loading ? 'Activating...' : 'Activate — 5,000 CFA'}
                     </button>
                 </div>
             </div>
         </div>
     );
 };
-
 export default function Users() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
