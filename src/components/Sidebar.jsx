@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard, Users, ShieldCheck,
-    Package, Calendar, LogOut, X, Menu, FileText
+    Package, Calendar, LogOut, X, Menu, FileText , CreditCard
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -12,6 +12,7 @@ const navItems = [
        { to: '/listing-requests', icon: FileText, label: 'Listing Requests' },
     { to: '/users', icon: Users, label: 'Users' },
     { to: '/listings', icon: Package, label: 'Listings' },
+    { to: '/payments', icon: CreditCard, label: 'Payments' },
 ];
 
 export default function Sidebar({ isOpen, onClose }) {

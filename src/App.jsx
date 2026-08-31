@@ -11,6 +11,7 @@ import Users from './pages/Users';
 import Listings from './pages/Listings';
 import Sidebar from './components/Sidebar';
 import ListingRequests from './pages/ListingRequests';
+import Payments from './pages/Payments';
 
 const ProtectedRoute = ({ children }) => {
     const { user, loading } = useAuth();
@@ -61,6 +62,7 @@ export default function App() {
                     <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
                     <Route path="/listings" element={<ProtectedRoute><Listings /></ProtectedRoute>} />
                     <Route path="/listing-requests" element={<ProtectedRoute><ListingRequests /></ProtectedRoute>} />
+                    <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </BrowserRouter>
